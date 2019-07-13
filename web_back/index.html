@@ -103,6 +103,32 @@
         }
 
     </script>
+    <script>
+        var $esc = $('.user_center_link>img').next();
+            $esc.click(function(e){
+                e.preventDefault();
+                $.post({
+                    url:'http://localhost:8000/admin/logout',
+                    success:function(backData){
+                        if(backData.code == 200){
+                            window.location.href = 'login.html'
+                        }
+                    }
+                })
+            });
+            $.get({
+                url:'http://localhost:8000/admin/getuser',
+                success:function(backData){
+                    if(backData.code == 200){
+                        $('.user_info').children('span').html('欢迎&nbsp;&nbsp;'+backData.data.nickname);
+                        $('.user_info').children('img').attr('src',backData.data.user_pic);
+                        $('.user_center_link>img').attr('src',backData.data.user_pic);
+                    }
+                    
+                }
+            })
+            
+    </script>
 
 </body>
 </html>
