@@ -72,7 +72,8 @@
                 <tfoot>
                     <tr>
                         <td colspan="3" class="text-center">
-                            <a href="#" class="btn btn-success" data-toggle="modal" data-target="#addModal">新增分类</a>
+                            <a href="#" class="btn btn-success btn_add" data-toggle="modal"
+                                data-target="#addModal">新增分类</a>
                         </td>
                     </tr>
                 </tfoot>
@@ -80,57 +81,189 @@
         </div>
     </div>
 
-    <div class="modal fade" id="addModal" >
+    <div class="modal fade" id="addModal">
         <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
-              <h4 class="modal-title">新增分类</h4>
-            </div>
-            <div class="modal-body">
-              <form>
-                <div class="form-group">
-                  <label for="recipient-name" class="control-label">分类名称:</label>
-                  <input type="text" class="form-control" id="recipient-name">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+                    <h4 class="modal-title">新增分类</h4>
                 </div>
-                <div class="form-group">
-                  <label for="message-text" class="control-label">分类别名:</label>
-                  <input type="text" class="form-control" id="recipient-name">
+                <div class="modal-body">
+                    <form>
+                        <input type="hidden" class="data__id" name="id">
+                        <div class="form-group">
+                            <label for="recipient-name" class="control-label">分类名称:</label>
+                            <input type="text" name="name" class="form-control" id="cate_name">
+                        </div>
+                        <div class="form-group">
+                            <label for="message-text" class="control-label">分类别名:</label>
+                            <input type="text" name="slug" class="form-control" id="nick_name">
+                        </div>
+                    </form>
                 </div>
-              </form>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" id="model_shutoff">关闭</button>
+                    <button type="button" class="btn btn-primary" id="model_add">新增</button>
+                </div>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-default" id="model_shutoff">关闭</button>
-              <button type="button" class="btn btn-primary" id="model_add">新增</button>
-            </div>
-          </div>
         </div>
-      </div>
+    </div>
+    <script src="./js/template-web.js"></script>
+    <script type="text/html" id="cate_tpl">
+        {{each data v}}
+        <tr>
+            <td>{{v.name}}</td>
+            <td>{{v.slug}}</td>
+            <td class="text-center">
+                <a data-id='{{v.id}}' href="#" class="btn btn-info btn-xs btn_edit">编辑</a>
+                <a href="#" data-id="{{v.id}}" class="btn btn-danger btn-xs btn_delete">删除</a>
+            </td>
+        </tr>
+        {{/each}}
+    </script>
 
-      <script>
-          $('#addModal').modal({
-            show:false,
-            backdrop:false
-          });
+    <script>
+        $('#addModal').modal({
+            show: false,
+            backdrop: false
+        });
 
-          $('#model_shutoff').click(function(){
-            alert('shutoff');
+        $('#model_shutoff').click(function () {
+            //alert('shutoff');
             $('#addModal').modal('hide');
-          });
+        });
 
-          $('#model_add').click(function(){
-            alert('add');
+
+    </script>
+    <script>
+        //进入分类管理发送ajax请求获取界面数据
+        //封装成函数
+        function getCate() {
+            $.get({
+                url: 'http://localhost:8000/admin/category_search',
+                success: function (backData) {
+
+                    if (backData.code == 200) {
+                        var html = template('cate_tpl', backData);
+                        $('tbody').html(html);
+                    }
+                }
+            });
+        }
+        getCate();
+
+        //新增，修改按钮
+        $('#model_add').click(function () {
+
+            //新增或修改名称，slug
+            var cate_name = $('#cate_name').val();
+            var nick_name = $('#nick_name').val();
+
+            //判断按钮是否有btn_success这个类，有是修改
+            if ($('#model_add').hasClass('btn-success')) {
+                //在点击的编辑按钮内保存this，用变量thatID保存在window内
+                var id = $(thatID).attr('data-id');
+                var data = $('.modal-body form').serialize();
+                //发送修改请求
+                $.post({
+                    url: 'http://localhost:8000/admin/category_edit',
+                    // data: {
+                    //     id: id,
+                    //     name: cate_name,
+                    //     slug: nick_name
+                    // },
+                    data:data,
+                    success: function (backData) {
+                        if (backData.code == 200) {
+                            alert(backData.msg);
+                            getCate();;
+                        };
+                    }
+                });
+            } else {
+                //否则是新增
+                //发送新增请求
+                $.post({
+                    url: 'http://localhost:8000/admin/category_add',
+                    data: {
+                        name: cate_name,
+                        slug: nick_name
+                    },
+                    success: function (backData) {
+
+                        if (cate_name == '' || nick_name == '') {
+                            alert('内容输入不能为空');
+                            return;
+                        }
+
+                        if (backData.code == 200) {
+                            alert(backData.msg);
+                            //新增成功后，重新发送获取cate界面的数据
+                            getCate();
+
+                        }
+                        if (backData.code == 400) {
+                            alert(backData.msg);
+                        }
+                    }
+                });
+            }
             $('#addModal').modal('hide');
-          });
+        });
+        //删除按钮,按钮动态添加的，事件添加要委托
+        $('tbody').on('click', '.btn_delete', function (e) {
+            //清除a标签默认跳转行为
+            e.preventDefault();
+            //ajax请求需要id参数
+            var id = $(this).attr('data-id');
+            //保存this
+            var that = $(this);
 
-          $('.category_table').delegate('a','click',function(){
-              if($(this).hasClass('btn-info')){
-                $('#addModal .modal-title').html('修改分类名称');
-                $('#addModal').modal('show');
-              }
-          })      
-      </script>
+            if (confirm('确认删除吗')) {
+                $.post({
+                    url: 'http://localhost:8000/admin/category_delete',
+                    data: { id: id },
+                    success: function (backData) {
+                        console.log(backData);
 
+                        if (backData.code == 200) {
+
+                            //从后台请求删除成功后，删除页面要删除的数据
+                            that.parents('tr').remove();
+                        }
+                    }
+                });
+            }
+
+        });
+        //编辑新增按钮
+        $('.btn_add').click(function () {
+            $('#addModal .modal-title').html('新增分类');
+            $('#model_add').text('新增');
+            $('#model_add').removeClass('btn-success');
+
+            $('#cate_name').val('');
+            $('#nick_name').val('');
+        })
+        //编辑按钮,按钮动态添加的，事件添加要委托
+        $('tbody').on('click', '.btn_edit', function (e) {
+            e.preventDefault();
+            $('#addModal .modal-title').html('修改分类');
+            $('#model_add').text('修改');
+            $('#model_add').addClass('btn-success');
+            $('#addModal').modal('show');
+
+            var thatID = this;
+            window.thatID = this;
+            
+            var slug = $(this).parent().prev().text(); //获取文章类别别名
+            var name = $(this).parent().prev().prev().text(); //获取文章类别
+            //把他们显示在弹出的模态框的 对应的标签中.
+            $('#cate_name').val(name);
+            $('#nick_name').val(slug);
+            $('.data__id').val($(this).attr('data-id'));
+        });
+    </script>
 </body>
 
 </html>
