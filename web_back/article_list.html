@@ -308,7 +308,7 @@
             }
         });
         //发送文章分类请求
-
+        var totalPages = 10;
         function getArtPage(page) {
             //获取下拉框的选中信息
             var artID = $('#selCategory').val();
@@ -322,12 +322,21 @@
                     perpage: 6
                 },
                 success: function (backData) {
-                    
+
                     var html = template('artcon_tpl', backData);
                     $('tbody').html(html);
-                    
-                    window.maxpage = backData.totalPage;
-                    
+
+                    //翻页插件动态翻页，回流重绘
+                    if (totalPages != backData.totalPage) {
+
+                        totalPages = backData.totalPage;
+                        var currentPage = $pagination.twbsPagination('getCurrentPage');
+                        $pagination.twbsPagination('destroy');
+                        $pagination.twbsPagination($.extend({}, defaultOpts, {
+                            startPage: 1,
+                            totalPages: totalPages
+                        }));
+                    } 
                 }
             });
         };
@@ -340,14 +349,16 @@
         $('#btnSearch').trigger('click');
 
         //翻页插件
-        $('.pagination').twbsPagination({
-            totalPages: 17,
+        var $pagination = $('.pagination');
+        var defaultOpts = {
+            totalPages: totalPages,
             visiblePages: 6,
             onPageClick: function (event, page) {
                 getArtPage(page);
             }
-        });
-        
+        };
+        $pagination.twbsPagination(defaultOpts);
+
     </script>
 </body>
 
