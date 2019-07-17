@@ -27,19 +27,20 @@
                 <div class="form-group">
                     <label for="inputEmail3" class="col-sm-2 control-label">文章标题：</label>
                     <div class="col-sm-10">
-                        <input type="email" class="form-control" id="inputEmail3" placeholder="文章标题">
+                        <input type="email" name="title" class="form-control" id="inputEmail3" placeholder="文章标题">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="inputPassword3" class="col-sm-2 control-label">文章封面：</label>
                     <div class="col-sm-10">
-                        <input type="file" id="exampleInputFile">
+                        <img src="" alt="" id="headIcon" style="height: 100px"><br>
+                        <input type="file" name="cover" id="exampleInputFile">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="inputEmail3" class="col-sm-2 control-label">文章类别：</label>
                     <div class="col-sm-4">
-                        <select class="form-control">
+                        <select class="form-control" name="type">
                             <option>1</option>
                             <option>2</option>
                             <option>3</option>
@@ -53,7 +54,7 @@
                     <div class="col-sm-4">
 
                         <div class="input-group">
-                            <input type="text" class="form-control" placeholder="YYYY-MM-DD" id="dateinput">
+                            <input type="text" class="form-control" name="date" placeholder="YYYY-MM-DD" id="dateinput">
                             <span class="input-group-btn">
                                 <button class="btn btn-default" type="button"
                                     onclick="jeDate('#dateinput',{trigger:false,format: 'YYYY-MM-DD'})"><i
@@ -72,14 +73,53 @@
                 </div>
                 <div class="form-group">
                     <div class="col-sm-offset-2 col-sm-10">
-                        <button type="submit" class="btn btn-success">发布</button>
+                        <button type="submit" class="btn btn-success btn_release">发布</button>
                         <button type="submit" class="btn btn-default">存为草稿</button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
+    <script src="./js/template-web.js"></script>
+    <script type="text/html" id="tpl">
+        {{each data v}}
+        <option value='{{v.id}}'>{{v.name}}</option>
+        {{/each}}
+    </script>
+    <script>
+        //获取文章分类渲染到下拉菜单
+        $.get({
+                url: 'http://localhost:8000/admin/category_search',
+                success: function (backData) {
 
+                    if (backData.code == 200) {
+                        var html = template('tpl', backData);
+                        $('.form-control').html(html);
+                    }
+                }
+            });
+        //头像图片预览
+        $('#exampleInputFile').change(function(){
+            var url = URL.createObjectURL(this.files[0]);
+            $('#headIcon').attr('src',url)
+        });
+        //发布按钮添加点击事件
+        $('.btn_release').click(function(){
+            var fm = new FormData($('.article_form')[0]);//传入的是dom对象
+            fm.append('content',tinyMCE.activeEditor.getContent())
+            fm.append('state','草稿')
+            $.post({
+                url:'http://localhost:8000/admin/article_publish',
+                data:fm,
+                contentType:false,
+                processData:false,
+                success:function(backData){
+                    alert(backData.msg);
+                    
+                }
+            })
+        })
+    </script>
 </body>
 
 </html>
