@@ -242,7 +242,7 @@
 
                         <td class="text-center">
                             <a href="post-edit.html?id=995" class="btn btn-default btn-xs">编辑</a>
-                            <a href="javascript:deleteTr( 995 );" class="btn btn-danger btn-xs">删除</a>
+                            <a href="javascript:deleteTr( 995 );" class="btn btn-danger btn-xs artdetele">删除</a>
                         </td>
                     </tr>
 
@@ -252,7 +252,7 @@
 
             <div class="row text-center">
                 <ul class="pagination pagination-sm">
-                    <li class="page-item first disabled"><a href="#" class="page-link">首页</a></li>
+                    <li class="page-item first disabled"><a href="#" class="page-link btn_click">首页</a></li>
                     <li class="page-item prev disabled"><a href="#" class="page-link">上一页</a></li>
                     <li class="page-item active"><a href="#" class="page-link">1</a></li>
                     <li class="page-item"><a href="#" class="page-link">2</a></li>
@@ -286,7 +286,7 @@
             <td class="text-center">{{v.state}}</td>
             <td class="text-center">
                 <a href="article_edit.html" class="btn btn-default btn-xs">编辑</a>
-                <a href="#" class="btn btn-danger btn-xs">删除</a>
+                <a href="#" data-id="{{v.id}}" class="btn btn-danger btn-xs artdetele">删除</a>
             </td>
         </tr>
         {{/each}}
@@ -325,12 +325,10 @@
 
                     var html = template('artcon_tpl', backData);
                     $('tbody').html(html);
-
+                    window.currentPage = $pagination.twbsPagination('getCurrentPage');
                     //翻页插件动态翻页，回流重绘
                     if (totalPages != backData.totalPage) {
-
                         totalPages = backData.totalPage;
-                        var currentPage = $pagination.twbsPagination('getCurrentPage');
                         $pagination.twbsPagination('destroy');
                         $pagination.twbsPagination($.extend({}, defaultOpts, {
                             startPage: 1,
@@ -343,7 +341,8 @@
         //筛选按钮点击事件
         $('#btnSearch').click(function (e) {
             e.preventDefault();
-            getArtPage();
+            $('.first').trigger('click')
+            getArtPage(1);
         });
         //进入文章页面触发
         $('#btnSearch').trigger('click');
@@ -358,7 +357,19 @@
             }
         };
         $pagination.twbsPagination(defaultOpts);
-
+        //删除文件按钮，按钮是动态添加的
+        $('tbody').on('click','.artdetele',function(){
+            var id = $(this).attr('data-id')
+            $.get({
+                url:'http://localhost:8000/admin/article_delete',
+                data:{id:id},
+                success:function(backData){
+                    getArtPage(currentPage);
+                    alert(backData.msg);
+                }
+            })
+            
+        })
     </script>
 </body>
 
